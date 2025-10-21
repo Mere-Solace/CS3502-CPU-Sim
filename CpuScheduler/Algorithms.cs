@@ -1,428 +1,450 @@
-﻿using System;
-using System.Windows.Forms;
+﻿
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using UtilClasses;
 
-namespace CpuScheduler
+namespace CpuScheduler;
+public static class CPUAlgorithms
 {
-    public static class Algorithms
+    /// <summary>
+    /// STUDENTS: Example FCFS algorithm implementation using DataGrid data
+    /// This replaces the old prompt-based system with direct data access
+    /// </summary>
+    public static List<SchedulingResult> RunFCFSAlgorithm(List<ProcessData> processes)
     {
-        /// <summary>
-        /// Executes the First Come First Serve scheduling algorithm.
-        /// </summary>
-        /// <param name="processCountInput">The number of processes to schedule.</param>
-        public static void RunFirstComeFirstServe(string processCountInput)
+        var results = new List<SchedulingResult>();
+        var currentTime = 0;
+
+        // Sort by arrival time for FCFS
+        var sortedProcesses = processes.OrderBy(p => p.ArrivalTime).ToList();
+
+        foreach (var process in sortedProcesses)
         {
-            if (!int.TryParse(processCountInput, out int processCount) || processCount <= 0)
+            var startTime = Math.Max(currentTime, process.ArrivalTime);
+            var finishTime = startTime + process.BurstTime;
+            var waitingTime = startTime - process.ArrivalTime;
+            var turnaroundTime = finishTime - process.ArrivalTime;
+
+            results.Add(new SchedulingResult
             {
-                MessageBox.Show("Invalid number of processes", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                ProcessID = process.ProcessID,
+                ArrivalTime = process.ArrivalTime,
+                BurstTime = process.BurstTime,
+                StartTime = startTime,
+                FinishTime = finishTime,
+                WaitingTime = waitingTime,
+                TurnaroundTime = turnaroundTime
+            });
+
+            currentTime = finishTime;
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// STUDENTS: SJF algorithm implementation using DataGrid data
+    /// Shortest Job First - selects process with minimum burst time
+    /// </summary>
+    public static List<SchedulingResult> RunSJFAlgorithm(List<ProcessData> processes)
+    {
+        var results = new List<SchedulingResult>();
+        var currentTime = 0;
+        var remainingProcesses = processes.ToList();
+
+        while (remainingProcesses.Count > 0)
+        {
+            // Get processes that have arrived by current time
+            var availableProcesses = remainingProcesses.Where(p => p.ArrivalTime <= currentTime).ToList();
+
+            if (availableProcesses.Count == 0)
+            {
+                // No process has arrived yet, jump to next arrival time
+                currentTime = remainingProcesses.Min(p => p.ArrivalTime);
+                continue;
             }
 
-            double[] burstTimes = new double[processCount];
-            double[] waitingTimes = new double[processCount];
-            double totalWaitingTime = 0.0;
-            double averageWaitingTime;
-            int i;
+            // Select process with shortest burst time
+            var nextProcess = availableProcesses.OrderBy(p => p.BurstTime).ThenBy(p => p.ArrivalTime).First();
 
-            DialogResult result = MessageBox.Show(
-                "First Come First Serve Scheduling",
-                string.Empty,
-                MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Information);
+            var startTime = Math.Max(currentTime, nextProcess.ArrivalTime);
+            var finishTime = startTime + nextProcess.BurstTime;
+            var waitingTime = startTime - nextProcess.ArrivalTime;
+            var turnaroundTime = finishTime - nextProcess.ArrivalTime;
 
-            if (result == DialogResult.Yes)
+            results.Add(new SchedulingResult
             {
-                for (i = 0; i < processCount; i++)
-                {
-                    string input = Microsoft.VisualBasic.Interaction.InputBox(
-                        "Enter Burst time:",
-                        "Burst time for P" + (i + 1),
-                        string.Empty,
-                        -1,
-                        -1);
+                ProcessID = nextProcess.ProcessID,
+                ArrivalTime = nextProcess.ArrivalTime,
+                BurstTime = nextProcess.BurstTime,
+                StartTime = startTime,
+                FinishTime = finishTime,
+                WaitingTime = waitingTime,
+                TurnaroundTime = turnaroundTime
+            });
 
-                    if (!double.TryParse(input, out burstTimes[i]) || burstTimes[i] < 0)
-                    {
-                        MessageBox.Show("Invalid burst time", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return;
-                    }
+            currentTime = finishTime;
+            remainingProcesses.Remove(nextProcess);
+        }
 
-                }
+        return results.OrderBy(r => r.StartTime).ToList();
+    }
 
-                for (i = 0; i < processCount; i++)
-                {
-                    if (i == 0)
-                    {
-                        waitingTimes[i] = 0;
-                    }
-                    else
-                    {
-                        waitingTimes[i] = waitingTimes[i - 1] + burstTimes[i - 1];
-                        MessageBox.Show(
-                            "Waiting time for P" + (i + 1) + " = " + waitingTimes[i],
-                            "Job Queue",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.None);
-                    }
-                }
-                for (i = 0; i < processCount; i++)
-                {
-                    totalWaitingTime = totalWaitingTime + waitingTimes[i];
-                }
-                averageWaitingTime = totalWaitingTime / processCount;
-                MessageBox.Show(
-                    "Average waiting time for " + processCount + " processes = " + averageWaitingTime + " sec(s)",
-                    "Average Waiting Time",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.None);
+    /// <summary>
+    /// STUDENTS: Priority algorithm implementation using DataGrid data
+    /// Higher priority number = higher priority (1 is lowest, higher numbers are higher priority)
+    /// </summary>
+    public static List<SchedulingResult> RunPriorityAlgorithm(List<ProcessData> processes)
+    {
+        var results = new List<SchedulingResult>();
+        var currentTime = 0;
+        var remainingProcesses = processes.ToList();
+
+        while (remainingProcesses.Count > 0)
+        {
+            // Get processes that have arrived by current time
+            var availableProcesses = remainingProcesses.Where(p => p.ArrivalTime <= currentTime).ToList();
+
+            if (availableProcesses.Count == 0)
+            {
+                // No process has arrived yet, jump to next arrival time
+                currentTime = remainingProcesses.Min(p => p.ArrivalTime);
+                continue;
+            }
+
+            // Select process with highest priority (highest number)
+            var nextProcess = availableProcesses.OrderByDescending(p => p.Priority).ThenBy(p => p.ArrivalTime).First();
+
+            var startTime = Math.Max(currentTime, nextProcess.ArrivalTime);
+            var finishTime = startTime + nextProcess.BurstTime;
+            var waitingTime = startTime - nextProcess.ArrivalTime;
+            var turnaroundTime = finishTime - nextProcess.ArrivalTime;
+
+            results.Add(new SchedulingResult
+            {
+                ProcessID = nextProcess.ProcessID,
+                ArrivalTime = nextProcess.ArrivalTime,
+                BurstTime = nextProcess.BurstTime,
+                StartTime = startTime,
+                FinishTime = finishTime,
+                WaitingTime = waitingTime,
+                TurnaroundTime = turnaroundTime
+            });
+
+            currentTime = finishTime;
+            remainingProcesses.Remove(nextProcess);
+        }
+
+        return results.OrderBy(r => r.StartTime).ToList();
+    }
+
+    /// <summary>
+    /// STUDENTS: Round Robin algorithm implementation using DataGrid data
+    /// Each process gets a time quantum, then cycles to next process
+    /// </summary>
+    public static List<SchedulingResult> RunRoundRobinAlgorithm(List<ProcessData> processes, int quantumTime = 4)
+    {
+        var results = new List<SchedulingResult>();
+        var currentTime = 0;
+        var processQueue = new Queue<ProcessData>();
+        var processResults = new Dictionary<string, SchedulingResult>();
+        var remainingBurstTimes = new Dictionary<string, int>();
+
+        // Initialize remaining burst times and results
+        foreach (var process in processes)
+        {
+            remainingBurstTimes[process.ProcessID] = process.BurstTime;
+            processResults[process.ProcessID] = new SchedulingResult
+            {
+                ProcessID = process.ProcessID,
+                ArrivalTime = process.ArrivalTime,
+                BurstTime = process.BurstTime,
+                StartTime = -1, // Will be set on first execution
+                FinishTime = 0,
+                WaitingTime = 0,
+                TurnaroundTime = 0
+            };
+        }
+
+        // Add processes that arrive at time 0
+        foreach (var process in processes.Where(p => p.ArrivalTime <= currentTime).OrderBy(p => p.ArrivalTime))
+        {
+            processQueue.Enqueue(process);
+        }
+
+        var processesNotInQueue = processes.Where(p => p.ArrivalTime > currentTime).OrderBy(p => p.ArrivalTime).ToList();
+
+        while (processQueue.Count > 0 || processesNotInQueue.Count > 0)
+        {
+            // Add any processes that have now arrived
+            while (processesNotInQueue.Count > 0 && processesNotInQueue[0].ArrivalTime <= currentTime)
+            {
+                processQueue.Enqueue(processesNotInQueue[0]);
+                processesNotInQueue.RemoveAt(0);
+            }
+
+            if (processQueue.Count == 0)
+            {
+                // No processes in queue, jump to next arrival
+                currentTime = processesNotInQueue[0].ArrivalTime;
+                continue;
+            }
+
+            var currentProcess = processQueue.Dequeue();
+            var result = processResults[currentProcess.ProcessID];
+
+            // Set start time if this is the first execution
+            if (result.StartTime == -1)
+            {
+                result.StartTime = currentTime;
+            }
+
+            // Execute for quantum time or remaining burst time, whichever is smaller
+            var executionTime = Math.Min(quantumTime, remainingBurstTimes[currentProcess.ProcessID]);
+            currentTime += executionTime;
+            remainingBurstTimes[currentProcess.ProcessID] -= executionTime;
+
+            // Add any processes that arrived during this execution
+            while (processesNotInQueue.Count > 0 && processesNotInQueue[0].ArrivalTime <= currentTime)
+            {
+                processQueue.Enqueue(processesNotInQueue[0]);
+                processesNotInQueue.RemoveAt(0);
+            }
+
+            // Check if process is completed
+            if (remainingBurstTimes[currentProcess.ProcessID] == 0)
+            {
+                result.FinishTime = currentTime;
+                result.TurnaroundTime = result.FinishTime - result.ArrivalTime;
+                result.WaitingTime = result.TurnaroundTime - result.BurstTime;
+            }
+            else
+            {
+                // Process not completed, add back to queue
+                processQueue.Enqueue(currentProcess);
             }
         }
 
-        /// <summary>
-        /// Executes the Shortest Job First scheduling algorithm.
-        /// </summary>
-        /// <param name="processCountInput">The number of processes to schedule.</param>
-        public static void RunShortestJobFirst(string processCountInput)
+        return processResults.Values.OrderBy(r => r.StartTime).ToList();
+    }
+
+
+    // >*** Multilevel Feedback Queue Algorithm ***<
+    public static List<SchedulingResult> RunMLFQAlgorithm(List<ProcessData> processes)
+    {
+        var results = new Dictionary<string, SchedulingResult>();
+        var remainingBurst = new Dictionary<string, int>();
+
+        // Define 3 queues with different quantum times
+        var queues = new List<Queue<ProcessData>>
+    {
+        new Queue<ProcessData>(), // High priority
+        new Queue<ProcessData>(), // Medium
+        new Queue<ProcessData>()  // Low
+    };
+        var quantums = new[] { 4, 16, 24 };
+
+        int currentTime = 0;
+        foreach (var process in processes)
         {
-            if (!int.TryParse(processCountInput, out int processCount) || processCount <= 0)
+            remainingBurst[process.ProcessID] = process.BurstTime;
+            results[process.ProcessID] = new SchedulingResult
             {
-                MessageBox.Show("Invalid number of processes", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                ProcessID = process.ProcessID,
+                ArrivalTime = process.ArrivalTime,
+                BurstTime = process.BurstTime,
+                StartTime = -1, // Will be set on first execution
+                FinishTime = 0,
+                WaitingTime = 0,
+                TurnaroundTime = 0
+            };
+        }
+
+        // Sort by arrival time initially
+        var waitingList = processes.OrderBy(p => p.ArrivalTime).ToList();
+
+        while (queues.Any(q => q.Count > 0) || waitingList.Count > 0)
+        {
+            // Add newly arrived processes to the top queue
+            while (waitingList.Count > 0 && waitingList[0].ArrivalTime <= currentTime)
+            {
+                queues[0].Enqueue(waitingList[0]);
+                waitingList.RemoveAt(0);
             }
 
-            double[] burstTimes = new double[processCount];
-            double[] waitingTimes = new double[processCount];
-            double[] sortedBurstTimes = new double[processCount];
-            double totalWaitingTime = 0.0;
-            double averageWaitingTime;
-            int x, i;
-            double temp = 0.0;
-            bool found = false;
-
-            DialogResult result = MessageBox.Show(
-                "Shortest Job First Scheduling",
-                string.Empty,
-                MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Information);
-
-            if (result == DialogResult.Yes)
+            // Find the highest non-empty queue
+            int level = queues.FindIndex(q => q.Count > 0);
+            if (level == -1)
             {
-                for (i = 0; i < processCount; i++)
-                {
-                    string input =
-                        Microsoft.VisualBasic.Interaction.InputBox("Enter burst time: ",
-                                                           "Burst time for P" + (i + 1),
-                                                           "",
-                                                           -1, -1);
+                // Jump to next process arrival
+                currentTime = waitingList[0].ArrivalTime;
+                continue;
+            }
 
-                    if (!double.TryParse(input, out burstTimes[i]) || burstTimes[i] < 0)
-                    {
-                        MessageBox.Show("Invalid burst time", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return;
-                    }
-                }
-                for (i = 0; i < processCount; i++)
-                {
-                    sortedBurstTimes[i] = burstTimes[i];
-                }
-                for (x = 0; x <= processCount - 2; x++)
-                {
-                    for (i = 0; i <= processCount - 2; i++)
-                    {
-                        if (sortedBurstTimes[i] > sortedBurstTimes[i + 1])
-                        {
-                            temp = sortedBurstTimes[i];
-                            sortedBurstTimes[i] = sortedBurstTimes[i + 1];
-                            sortedBurstTimes[i + 1] = temp;
-                        }
-                    }
-                }
-                for (i = 0; i < processCount; i++)
-                {
-                    if (i == 0)
-                    {
-                        for (x = 0; x < processCount; x++)
-                        {
-                            if (sortedBurstTimes[i] == burstTimes[x] && found == false)
-                            {
-                                waitingTimes[i] = 0;
-                                MessageBox.Show(
-                                    "Waiting time for P" + (x + 1) + " = " + waitingTimes[i],
-                                    "Waiting time:",
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.None);
-                                burstTimes[x] = 0;
-                                found = true;
-                            }
-                        }
-                        found = false;
-                    }
-                    else
-                    {
-                        for (x = 0; x < processCount; x++)
-                        {
-                            if (sortedBurstTimes[i] == burstTimes[x] && found == false)
-                            {
-                                waitingTimes[i] = waitingTimes[i - 1] + sortedBurstTimes[i - 1];
-                                MessageBox.Show(
-                                    "Waiting time for P" + (x + 1) + " = " + waitingTimes[i],
-                                    "Waiting time",
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.None);
-                                burstTimes[x] = 0;
-                                found = true;
-                            }
-                        }
-                        found = false;
-                    }
-                }
-                for (i = 0; i < processCount; i++)
-                {
-                    totalWaitingTime = totalWaitingTime + waitingTimes[i];
-                }
-                averageWaitingTime = totalWaitingTime / processCount;
-                MessageBox.Show(
-                    "Average waiting time for " + processCount + " processes = " + averageWaitingTime + " sec(s)",
-                    "Average waiting time",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
+            var process = queues[level].Dequeue();
+            var result = results[process.ProcessID];
+
+            // Mark first execution
+            if (result.StartTime == -1)
+                result.StartTime = currentTime;
+
+            int execTime = Math.Min(quantums[level], remainingBurst[process.ProcessID]);
+            currentTime += execTime;
+            remainingBurst[process.ProcessID] -= execTime;
+
+            // Add newly arrived processes during this time
+            while (waitingList.Count > 0 && waitingList[0].ArrivalTime <= currentTime)
+            {
+                queues[0].Enqueue(waitingList[0]);
+                waitingList.RemoveAt(0);
+            }
+
+            if (remainingBurst[process.ProcessID] == 0)
+            {
+                result.FinishTime = currentTime;
+                result.TurnaroundTime = result.FinishTime - result.ArrivalTime;
+                result.WaitingTime = result.TurnaroundTime - result.BurstTime;
+            }
+            else
+            {
+                // Process not finished — move to lower queue (if not lowest)
+                int nextLevel = Math.Min(level + 1, queues.Count - 1);
+                queues[nextLevel].Enqueue(process);
             }
         }
 
-        /// <summary>
-        /// Executes the Priority scheduling algorithm.
-        /// </summary>
-        /// <param name="processCountInput">The number of processes to schedule.</param>
-        public static void RunPriorityScheduling(string processCountInput)
+        return results.Values.OrderBy(r => r.StartTime).ToList();
+    }
+
+    // >*** Completely Fair Scheduler Algorithm ***<
+    public static List<SchedulingResult> RunCFSAlgorithm(List<ProcessData> processes)
+    {
+        const double NICE_0_LOAD = 1024.0; // CFS constant used to scale vruntime increments
+        const int targetLatency = 20;      // target latency for the run queue (ms)
+        var results = new Dictionary<string, SchedulingResult>();
+        var remaining = new Dictionary<string, int>();
+
+        // Initialize
+        foreach (var p in processes)
         {
-            if (!int.TryParse(processCountInput, out int processCount) || processCount <= 0)
+            remaining[p.ProcessID] = p.BurstTime;
+            results[p.ProcessID] = new SchedulingResult
             {
-                MessageBox.Show("Invalid number of processes", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                ProcessID = p.ProcessID,
+                ArrivalTime = p.ArrivalTime,
+                BurstTime = p.BurstTime,
+                StartTime = -1, // Will be set on first execution
+                FinishTime = 0,
+                WaitingTime = 0,
+                TurnaroundTime = 0
+            };
+        }
+
+        var waiting = processes.OrderBy(p => p.ArrivalTime).ToList();
+        var runqueue = new RBTree();
+        var vruntimeMap = new Dictionary<string, double>(); // store current vruntime per process
+        double currentTime = 0;
+
+        // helper: map priority->weight
+        Func<int, double> priorityToWeight = (prio) =>
+        {
+            // if priority is small=high priority: use (21-prio)
+            var p = Math.Max(1, Math.Min(20, prio));
+            return (double)(21 - p);
+        };
+
+        while (!runqueue.IsEmpty || waiting.Count > 0)
+        {
+            // enqueue newly arrived processes (vruntime 0 when inserted)
+            while (waiting.Count > 0 && waiting[0].ArrivalTime <= (int)currentTime)
+            {
+                var proc = waiting[0];
+                waiting.RemoveAt(0);
+                vruntimeMap[proc.ProcessID] = 0.0;
+                runqueue.Insert(vruntimeMap[proc.ProcessID], proc.ProcessID, proc);
             }
 
-            DialogResult result = MessageBox.Show(
-                "Priority Scheduling",
-                string.Empty,
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Information);
-
-            if (result == DialogResult.Yes)
+            if (runqueue.IsEmpty)
             {
-                double[] burstTimes = new double[processCount];
-                double[] waitingTimes = new double[processCount + 1];
-                int[] priorities = new int[processCount];
-                int[] sortedPriorities = new int[processCount];
-                int x, i;
-                double totalWaitingTime = 0.0;
-                double averageWaitingTime;
-                int temp = 0;
-                bool found = false;
-                for (i = 0; i < processCount; i++)
+                // jump to next arrival
+                if (waiting.Count > 0)
                 {
-                    string input =
-                        Microsoft.VisualBasic.Interaction.InputBox("Enter burst time: ",
-                                                           "Burst time for P" + (i + 1),
-                                                           "",
-                                                           -1, -1);
-                    if (!double.TryParse(input, out burstTimes[i]) || burstTimes[i] < 0)
-                    {
-                        MessageBox.Show("Invalid burst time", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return;
-                    }
+                    currentTime = waiting[0].ArrivalTime;
+                    continue;
                 }
-                for (i = 0; i < processCount; i++)
+                else break;
+            }
+
+            // compute total weight of all runnable processes
+            double totalWeight = 0;
+            // naive walk: we can sum weights by iterating waiting & tree - instead, compute by scanning results/remaining
+            foreach (var kv in remaining)
+            {
+                if (kv.Value > 0)
                 {
-                    string input2 =
-                        Microsoft.VisualBasic.Interaction.InputBox("Enter priority: ",
-                                                           "Priority for P" + (i + 1),
-                                                           "",
-                                                           -1, -1);
-                    if (!int.TryParse(input2, out priorities[i]) || priorities[i] < 0)
-                    {
-                        MessageBox.Show("Invalid priority", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return;
-                    }
+                    // lookup priority from processes list
+                    var p = processes.First(pr => pr.ProcessID == kv.Key);
+                    totalWeight += priorityToWeight(p.Priority);
                 }
-                for (i = 0; i < processCount; i++)
-                {
-                    sortedPriorities[i] = priorities[i];
-                }
-                for (x = 0; x <= processCount - 2; x++)
-                {
-                    for (i = 0; i <= processCount - 2; i++)
-                    {
-                        if (sortedPriorities[i] > sortedPriorities[i + 1])
-                        {
-                            temp = sortedPriorities[i];
-                            sortedPriorities[i] = sortedPriorities[i + 1];
-                            sortedPriorities[i + 1] = temp;
-                        }
-                    }
-                }
-                for (i = 0; i < processCount; i++)
-                {
-                    if (i == 0)
-                    {
-                        for (x = 0; x < processCount; x++)
-                        {
-                            if (sortedPriorities[i] == priorities[x] && found == false)
-                            {
-                                waitingTimes[i] = 0;
-                                MessageBox.Show(
-                                    "Waiting time for P" + (x + 1) + " = " + waitingTimes[i],
-                                    "Waiting time",
-                                    MessageBoxButtons.OK);
-                                temp = x;
-                                priorities[x] = 0;
-                                found = true;
-                            }
-                        }
-                        found = false;
-                    }
-                    else
-                    {
-                        for (x = 0; x < processCount; x++)
-                        {
-                            if (sortedPriorities[i] == priorities[x] && found == false)
-                            {
-                                waitingTimes[i] = waitingTimes[i - 1] + burstTimes[temp];
-                                MessageBox.Show(
-                                    "Waiting time for P" + (x + 1) + " = " + waitingTimes[i],
-                                    "Waiting time",
-                                    MessageBoxButtons.OK);
-                                temp = x;
-                                priorities[x] = 0;
-                                found = true;
-                            }
-                        }
-                        found = false;
-                    }
-                }
-                for (i = 0; i < processCount; i++)
-                {
-                    totalWaitingTime = totalWaitingTime + waitingTimes[i];
-                }
-                averageWaitingTime = totalWaitingTime / processCount;
-                MessageBox.Show(
-                    "Average waiting time for " + processCount + " processes = " + averageWaitingTime + " sec(s)",
-                    "Average waiting time",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
+            }
+
+            // pop the process with minimum vruntime
+            var popped = runqueue.PopMin();
+            if (popped == null) break;
+            var (procV, pid, procData) = popped.Value;
+
+            var result = results[pid];
+            if (result.StartTime == -1)
+                result.StartTime = (int)currentTime;
+
+            var weight = priorityToWeight(procData.Priority);
+
+            // compute timeslice: proportional to weight
+            int timeslice;
+            if (totalWeight <= 0)
+                timeslice = 4;
+            else
+                timeslice = Math.Max(1, (int)Math.Floor(targetLatency * (weight / totalWeight)));
+
+            // ensure we at least allow a small quantum
+            timeslice = Math.Max(1, timeslice);
+
+            var exec = Math.Min(timeslice, remaining[pid]);
+
+            currentTime += exec;
+            remaining[pid] -= exec;
+
+            // increment vruntime for this process
+            // delta_vruntime = exec * (NICE_0_LOAD / weight)
+            // this means heavier (larger weight) processes accumulate vruntime slower, getting more CPU share.
+            var deltaV = exec * (NICE_0_LOAD / weight);
+            vruntimeMap[pid] = procV + deltaV;
+
+            // insert newly arrived processes during execution
+            while (waiting.Count > 0 && waiting[0].ArrivalTime <= (int)currentTime)
+            {
+                var proc = waiting[0];
+                waiting.RemoveAt(0);
+                vruntimeMap[proc.ProcessID] = 0.0;
+                runqueue.Insert(vruntimeMap[proc.ProcessID], proc.ProcessID, proc);
+            }
+
+            if (remaining[pid] == 0)
+            {
+                result.FinishTime = (int)currentTime;
+                result.TurnaroundTime = result.FinishTime - result.ArrivalTime;
+                result.WaitingTime = result.TurnaroundTime - result.BurstTime;
+                // done — do not reinsert
+            }
+            else
+            {
+                // reinsert with updated vruntime so tree ordering changes
+                runqueue.Insert(vruntimeMap[pid], pid, procData);
             }
         }
 
-        /// <summary>
-        /// Executes the Round Robin scheduling algorithm.
-        /// </summary>
-        /// <param name="processCountInput">The number of processes to schedule.</param>
-        public static void RunRoundRobin(string processCountInput)
-        {
-            if (!int.TryParse(processCountInput, out int processCount) || processCount <= 0)
-            {
-                MessageBox.Show("Invalid number of processes", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-            int index, counter = 0;
-            double total;
-            double timeQuantum;
-            double waitTime = 0, turnaroundTime = 0;
-            double averageWaitTime, averageTurnaroundTime;
-            double[] arrivalTimes = new double[processCount];
-            double[] burstTimes = new double[processCount];
-            double[] remainingTimes = new double[processCount];
-            int remainingProcesses = processCount;
-
-            DialogResult result = MessageBox.Show(
-                "Round Robin Scheduling",
-                string.Empty,
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Information);
-
-            if (result == DialogResult.Yes)
-            {
-                for (index = 0; index < processCount; index++)
-                {
-                    string arrivalInput =
-                            Microsoft.VisualBasic.Interaction.InputBox("Enter arrival time: ",
-                                                               "Arrival time for P" + (index + 1),
-                                                               "",
-                                                               -1, -1);
-                    if (!double.TryParse(arrivalInput, out arrivalTimes[index]) || arrivalTimes[index] < 0)
-                    {
-                        MessageBox.Show("Invalid arrival time", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return;
-                    }
-
-                    string burstInput =
-                            Microsoft.VisualBasic.Interaction.InputBox("Enter burst time: ",
-                                                               "Burst time for P" + (index + 1),
-                                                               "",
-                                                               -1, -1);
-                    if (!double.TryParse(burstInput, out burstTimes[index]) || burstTimes[index] < 0)
-                    {
-                        MessageBox.Show("Invalid burst time", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return;
-                    }
-
-                    remainingTimes[index] = burstTimes[index];
-                }
-                string timeQuantumInput =
-                            Microsoft.VisualBasic.Interaction.InputBox("Enter time quantum: ", "Time Quantum",
-                                                               "",
-                                                               -1, -1);
-
-                if (!double.TryParse(timeQuantumInput, out timeQuantum) || timeQuantum <= 0)
-                {
-                    MessageBox.Show("Invalid quantum time", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-                Helper.QuantumTime = timeQuantumInput;
-
-                for (total = 0, index = 0; remainingProcesses != 0;)
-                {
-                    if (remainingTimes[index] <= timeQuantum && remainingTimes[index] > 0)
-                    {
-                        total = total + remainingTimes[index];
-                        remainingTimes[index] = 0;
-                        counter = 1;
-                    }
-                    else if (remainingTimes[index] > 0)
-                    {
-                        remainingTimes[index] = remainingTimes[index] - timeQuantum;
-                        total = total + timeQuantum;
-                    }
-                    if (remainingTimes[index] == 0 && counter == 1)
-                    {
-                        remainingProcesses--;
-                        MessageBox.Show("Turnaround time for Process " + (index + 1) + " : " + (total - arrivalTimes[index]), "Turnaround time for Process " + (index + 1), MessageBoxButtons.OK);
-                        MessageBox.Show("Wait time for Process " + (index + 1) + " : " + (total - arrivalTimes[index] - burstTimes[index]), "Wait time for Process " + (index + 1), MessageBoxButtons.OK);
-                        turnaroundTime = turnaroundTime + total - arrivalTimes[index];
-                        waitTime = waitTime + total - arrivalTimes[index] - burstTimes[index];
-                        counter = 0;
-                    }
-                    if (index == processCount - 1)
-                    {
-                        index = 0;
-                    }
-                    else if (arrivalTimes[index + 1] <= total)
-                    {
-                        index++;
-                    }
-                    else
-                    {
-                        index = 0;
-                    }
-                }
-                averageWaitTime = Convert.ToInt64(waitTime * 1.0 / processCount);
-                averageTurnaroundTime = Convert.ToInt64(turnaroundTime * 1.0 / processCount);
-                MessageBox.Show("Average wait time for " + processCount + " processes: " + averageWaitTime + " sec(s)", string.Empty, MessageBoxButtons.OK);
-                MessageBox.Show("Average turnaround time for " + processCount + " processes: " + averageTurnaroundTime + " sec(s)", string.Empty, MessageBoxButtons.OK);
-            }
-        }
-
-        // TODO: Add new scheduling algorithms below. Use the above methods as
-        // examples when expanding functionality.
-        
+        // return results ordered by StartTime (similar to your previous style)
+        return results.Values.OrderBy(r => r.StartTime).ToList();
     }
 }
-

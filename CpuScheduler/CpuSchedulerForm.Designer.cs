@@ -61,6 +61,7 @@
             this.btnSJF = new System.Windows.Forms.Button();
             this.btnFCFS = new System.Windows.Forms.Button();
             this.btnMLFQ = new System.Windows.Forms.Button();
+            this.btnCFS = new System.Windows.Forms.Button();
             this.txtProcess = new System.Windows.Forms.TextBox();
             this.labelProcess = new System.Windows.Forms.Label();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
@@ -423,6 +424,7 @@
             this.algorithmButtonPanel.Controls.Add(this.btnPriority);
             this.algorithmButtonPanel.Controls.Add(this.btnRoundRobin);
             this.algorithmButtonPanel.Controls.Add(this.btnMLFQ);
+            this.algorithmButtonPanel.Controls.Add(this.btnCFS);
             this.algorithmButtonPanel.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
             this.algorithmButtonPanel.Location = new System.Drawing.Point(20, 450);
             this.algorithmButtonPanel.Name = "algorithmButtonPanel";
@@ -523,6 +525,23 @@
             this.btnMLFQ.Text = "MLFQ";
             this.btnMLFQ.UseVisualStyleBackColor = false;
             this.btnMLFQ.Click += new System.EventHandler(this.MultilevelFeedbackQueueButton_Click);
+           
+           //
+           // btnCFS
+           //
+            this.btnCFS.Enabled = true;
+            this.btnCFS.BackColor = System.Drawing.Color.Beige;
+            this.btnCFS.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnCFS.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
+            this.btnCFS.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCFS.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnCFS.Margin = new System.Windows.Forms.Padding(10, 5, 10, 5);
+            this.btnCFS.Name = "btnCFS";
+            this.btnCFS.Size = new System.Drawing.Size(140, 50);
+            this.btnCFS.TabIndex = 10;
+            this.btnCFS.Text = "CFS";
+            this.btnCFS.UseVisualStyleBackColor = false;
+            this.btnCFS.Click += new System.EventHandler(this.CompletelyFairSchedulerButton_Click);
            
             // 
             // txtProcess
@@ -626,6 +645,7 @@
         private System.Windows.Forms.Button btnSJF;
         private System.Windows.Forms.Button btnFCFS;
         private System.Windows.Forms.Button btnMLFQ;
+        private System.Windows.Forms.Button btnCFS;
         public System.Windows.Forms.TextBox txtProcess;
         private System.Windows.Forms.Label labelProcess;
         private System.Windows.Forms.Panel sidePanel;
