@@ -60,6 +60,7 @@
             this.btnPriority = new System.Windows.Forms.Button();
             this.btnSJF = new System.Windows.Forms.Button();
             this.btnFCFS = new System.Windows.Forms.Button();
+            this.btnMLFQ = new System.Windows.Forms.Button();
             this.txtProcess = new System.Windows.Forms.TextBox();
             this.labelProcess = new System.Windows.Forms.Label();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
@@ -321,7 +322,7 @@
             this.processDataGrid.Location = new System.Drawing.Point(20, 95);
             this.processDataGrid.Name = "processDataGrid";
             this.processDataGrid.Size = new System.Drawing.Size(450, 300);
-            this.processDataGrid.TabIndex = 20;
+            this.processDataGrid.TabIndex = 30;
             this.processDataGrid.Visible = true;
             // 
             // btnSetProcessCount
@@ -421,6 +422,7 @@
             this.algorithmButtonPanel.Controls.Add(this.btnSJF);
             this.algorithmButtonPanel.Controls.Add(this.btnPriority);
             this.algorithmButtonPanel.Controls.Add(this.btnRoundRobin);
+            this.algorithmButtonPanel.Controls.Add(this.btnMLFQ);
             this.algorithmButtonPanel.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
             this.algorithmButtonPanel.Location = new System.Drawing.Point(20, 450);
             this.algorithmButtonPanel.Name = "algorithmButtonPanel";
@@ -505,6 +507,23 @@
             this.btnFCFS.Text = "FCFS";
             this.btnFCFS.UseVisualStyleBackColor = false;
             this.btnFCFS.Click += new System.EventHandler(this.FirstComeFirstServeButton_Click);
+           //
+           // btnMLFQ
+           //
+            this.btnMLFQ.Enabled = true;
+            this.btnMLFQ.BackColor = System.Drawing.Color.Beige;
+            this.btnMLFQ.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnMLFQ.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
+            this.btnMLFQ.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnMLFQ.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnMLFQ.Margin = new System.Windows.Forms.Padding(10, 5, 10, 5);
+            this.btnMLFQ.Name = "btnMLFQ";
+            this.btnMLFQ.Size = new System.Drawing.Size(140, 50);
+            this.btnMLFQ.TabIndex = 10;
+            this.btnMLFQ.Text = "MLFQ";
+            this.btnMLFQ.UseVisualStyleBackColor = false;
+            this.btnMLFQ.Click += new System.EventHandler(this.MultilevelFeedbackQueueButton_Click);
+           
             // 
             // txtProcess
             // 
@@ -606,6 +625,7 @@
         private System.Windows.Forms.Button btnPriority;
         private System.Windows.Forms.Button btnSJF;
         private System.Windows.Forms.Button btnFCFS;
+        private System.Windows.Forms.Button btnMLFQ;
         public System.Windows.Forms.TextBox txtProcess;
         private System.Windows.Forms.Label labelProcess;
         private System.Windows.Forms.Panel sidePanel;
